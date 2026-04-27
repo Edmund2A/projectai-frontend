@@ -38,7 +38,7 @@ if (loginForm) {
       loginSpinner.classList.remove('hidden');
 
       // Send data to backend
-      fetch('${API_URL}/api/auth/login', {
+      fetch('https://projectai-backend-production.up.railway.app/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

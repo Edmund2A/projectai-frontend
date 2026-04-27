@@ -1158,7 +1158,7 @@
 
       showLoading(`AI is writing ${ch.title}...`);
 
-      fetch('${API_URL}/api/ai/generate', {
+      fetch('https://projectai-backend-production.up.railway.app/api/ai/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1201,7 +1201,7 @@
       input.value = '';
 
       if (existingContent && ch.status !== 'pending') {
-        fetch('${API_URL}/api/ai/edit', {
+        fetch('https://projectai-backend-production.up.railway.app/api/ai/edit', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1229,7 +1229,7 @@
           showToast('Could not connect to server. Please try again.');
         });
       } else {
-        fetch('${API_URL}/api/ai/generate', {
+        fetch('https://projectai-backend-production.up.railway.app/api/ai/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1328,7 +1328,7 @@
 
       // First save all generated content to database
       const savePromises = Object.keys(generatedContent).map(chapterNum => {
-        return fetch(`${API_URL}/api/chapters/${projectId}/chapter/${chapterNum}`, {
+        return fetch(`https://projectai-backend-production.up.railway.app/api/chapters/${projectId}/chapter/${chapterNum}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1344,7 +1344,7 @@
       Promise.all(savePromises)
         .then(() => {
           // Now download the file
-          const downloadUrl = `${API_URL}/api/download/${selectedFormat}/${projectId}`;
+          const downloadUrl = `https://projectai-backend-production.up.railway.app/api/download/${selectedFormat}/${projectId}`;
 
           fetch(downloadUrl, {
             headers: {

@@ -808,7 +808,7 @@
 
     // ── Fetch projects from backend ──
     function fetchProjects() {
-      fetch('${API_URL}/api/projects', {
+      fetch('https://projectai-backend-production.up.railway.app/api/projects', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
