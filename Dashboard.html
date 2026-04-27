@@ -788,30 +788,27 @@
   </div>
 
   <script>
-    // ── State ──
+const API_URL = 'https://projectai-backend-production.up.railway.app';
     let projects = [];
     let currentFilter = 'all';
 
-    // ── Get user info from localStorage ──
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // ── Redirect if not logged in ──
     if (!token) window.location.href = 'login.html';
 
-    // ── Update user info in sidebar ──
     if (user.firstName) {
-      document.querySelector('.user-info p').textContent = user.firstName + ' ' + (user.lastName || '');
-      document.querySelector('.avatar').textContent = (user.firstName[0] + (user.lastName ? user.lastName[0] : '')).toUpperCase();
-      document.querySelector('.topbar p').textContent = `Welcome back, ${user.firstName}. Here are your projects.`;
+      const userInfoEl = document.querySelector('.user-info p');
+      const avatarEl = document.querySelector('.avatar');
+      const welcomeEl = document.querySelector('.topbar p');
+      if (userInfoEl) userInfoEl.textContent = user.firstName + ' ' + (user.lastName || '');
+      if (avatarEl) avatarEl.textContent = (user.firstName[0] + (user.lastName ? user.lastName[0] : '')).toUpperCase();
+      if (welcomeEl) welcomeEl.textContent = `Welcome back, ${user.firstName}. Here are your projects.`;
     }
 
-    // ── Fetch projects from backend ──
     function fetchProjects() {
-      fetch('https://projectai-backend-production.up.railway.app/api/projects', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      fetch(API_URL + '/api/projects', {
+        headers: { 'Authorization': 'Bearer ' + token }
       })
       .then(res => res.json())
       .then(data => {
@@ -833,13 +830,11 @@
       });
     }
 
-    // ── Format date ──
     function formatDate(dateString) {
       if (!dateString) return 'Just now';
       const date = new Date(dateString);
       const now = new Date();
       const diff = Math.floor((now - date) / 1000);
-
       if (diff < 60) return 'Just now';
       if (diff < 3600) return Math.floor(diff / 60) + ' minutes ago';
       if (diff < 86400) return Math.floor(diff / 3600) + ' hours ago';
@@ -847,24 +842,17 @@
       return date.toLocaleDateString();
     }
 
-    // ── Generate chapter dots ──
     function generateDots(currentChapter, status) {
       const dots = [];
       for (let i = 1; i <= 5; i++) {
-        if (status === 'completed') {
-          dots.push('done');
-        } else if (i < currentChapter) {
-          dots.push('done');
-        } else if (i === currentChapter) {
-          dots.push('active');
-        } else {
-          dots.push('');
-        }
+        if (status === 'completed') dots.push('done');
+        else if (i < currentChapter) dots.push('done');
+        else if (i === currentChapter) dots.push('active');
+        else dots.push('');
       }
       return dots;
     }
 
-    // ── Render Projects ──
     function renderProjects(filter) {
       const grid = document.getElementById('projectsGrid');
       const filtered = filter === 'all' ? projects : projects.filter(p => p.status === filter);
@@ -911,7 +899,6 @@
         grid.appendChild(card);
       });
 
-      // Add new project card
       const newCard = document.createElement('div');
       newCard.className = 'new-project-card';
       newCard.onclick = openModal;
@@ -923,20 +910,17 @@
       `;
       grid.appendChild(newCard);
 
-      // Update stats
       document.getElementById('totalProjects').textContent = projects.length;
       document.getElementById('inProgressCount').textContent = projects.filter(p => p.status === 'progress').length;
       document.getElementById('completedCount').textContent = projects.filter(p => p.status === 'completed').length;
     }
 
-    // ── Open project ──
     function openProject(id, title) {
       localStorage.setItem('projectId', id);
       localStorage.setItem('projectTitle', title);
       window.location.href = 'editor.html';
     }
 
-    // ── Filter ──
     function filterProjects(filter, btn) {
       currentFilter = filter;
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -944,7 +928,6 @@
       renderProjects(filter);
     }
 
-    // ── Sidebar ──
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       const main = document.getElementById('main');
@@ -962,7 +945,6 @@
       document.getElementById('mobileOverlay').classList.remove('visible');
     }
 
-    // ── Modal ──
     function openModal() {
       document.getElementById('newProjectModal').classList.add('visible');
     }
@@ -975,7 +957,6 @@
       document.getElementById('projectDesc').value = '';
     }
 
-    // ── Create project ──
     function createProject() {
       const title = document.getElementById('projectTitle').value.trim();
       const dept = document.getElementById('projectDept').value.trim();
@@ -990,11 +971,11 @@
       createBtn.textContent = 'Creating...';
       createBtn.disabled = true;
 
-      fetch('http://localhost:5000/api/projects', {
+      fetch(API_URL + '/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': 'Bearer ' + token
         },
         body: JSON.stringify({
           title,
@@ -1008,7 +989,6 @@
         createBtn.textContent = 'Create project →';
         createBtn.disabled = false;
         closeModal();
-
         if (data.id) {
           localStorage.setItem('projectId', data.id);
           localStorage.setItem('projectTitle', data.title);
@@ -1024,7 +1004,6 @@
       });
     }
 
-    // ── Init ──
     fetchProjects();
   </script>
 
