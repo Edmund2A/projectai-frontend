@@ -6,338 +6,53 @@
   <title>ProjectAI — Create Account</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #1a1a1a;
-      background: #fff;
-    }
-
-    .auth-page {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    /* ── Left Panel ── */
-    .auth-left {
-      flex: 1;
-      background: #534AB7;
-      padding: 2.5rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-width: 260px;
-    }
-
-    .auth-logo {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #fff;
-      text-decoration: none;
-    }
-
-    .auth-left-content h2 {
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 0.8rem;
-      line-height: 1.4;
-    }
-
-    .auth-left-content p {
-      font-size: 0.9rem;
-      color: #AFA9EC;
-      line-height: 1.7;
-      margin-bottom: 2rem;
-    }
-
-    .auth-features {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .auth-feature {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.8rem;
-    }
-
-    .auth-feature-icon {
-      min-width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      color: #fff;
-      font-weight: 700;
-    }
-
-    .auth-feature p {
-      font-size: 0.85rem;
-      color: #AFA9EC;
-      line-height: 1.5;
-    }
-
-    .auth-left-bottom {
-      font-size: 0.75rem;
-      color: #7F77DD;
-      margin-top: 2rem;
-    }
-
-    /* ── Right Panel ── */
-    .auth-right {
-      flex: 1.3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2.5rem;
-      background: #fff;
-      overflow-y: auto;
-    }
-
-    .auth-form-wrap {
-      width: 100%;
-      max-width: 440px;
-    }
-
-    .auth-form-header {
-      margin-bottom: 1.8rem;
-    }
-
-    .auth-form-header h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-bottom: 0.4rem;
-    }
-
-    .auth-form-header p {
-      font-size: 0.9rem;
-      color: #666;
-    }
-
-    .auth-form-header a {
-      color: #534AB7;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    /* ── Form ── */
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-
-    .form-group {
-      margin-bottom: 1rem;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #444;
-      margin-bottom: 0.4rem;
-    }
-
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 0.65rem 0.9rem;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      color: #1a1a1a;
-      background: #fff;
-      transition: border-color 0.2s;
-      font-family: inherit;
-      appearance: none;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: #534AB7;
-      box-shadow: 0 0 0 3px rgba(83,74,183,0.1);
-    }
-
-    .error-msg {
-      font-size: 0.78rem;
-      color: #e53e3e;
-      margin-top: 0.3rem;
-      display: block;
-      min-height: 1rem;
-    }
-
-    /* ── Password ── */
-    .password-wrap {
-      position: relative;
-    }
-
-    .password-wrap input {
-      padding-right: 2.5rem;
-    }
-
-    .eye-btn {
-      position: absolute;
-      right: 0.7rem;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      padding: 0;
-      color: #888;
-    }
-
-    /* ── Password Strength ── */
-    .strength-bar {
-      display: flex;
-      gap: 4px;
-      margin-top: 6px;
-    }
-
-    .strength-seg {
-      flex: 1;
-      height: 4px;
-      border-radius: 2px;
-      background: #e8e8e8;
-      transition: background 0.3s;
-    }
-
-    .strength-label {
-      font-size: 0.78rem;
-      margin-top: 0.3rem;
-      display: block;
-      font-weight: 500;
-    }
-
-    /* ── Terms ── */
-    .form-terms {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.6rem;
-      margin-bottom: 1.2rem;
-    }
-
-    .form-terms input[type="checkbox"] {
-      margin-top: 3px;
-      accent-color: #534AB7;
-      min-width: 16px;
-      width: 16px;
-      height: 16px;
-    }
-
-    .form-terms label {
-      font-size: 0.82rem;
-      color: #555;
-      line-height: 1.5;
-      cursor: pointer;
-    }
-
-    .form-terms a {
-      color: #534AB7;
-      text-decoration: none;
-    }
-
-    /* ── Submit Button ── */
-    .btn-submit {
-      width: 100%;
-      padding: 0.8rem;
-      font-size: 1rem;
-      background: #534AB7;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      transition: background 0.2s;
-      font-family: inherit;
-      margin-bottom: 1.2rem;
-    }
-
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; background: #fff; }
+    .auth-page { display: flex; min-height: 100vh; }
+    .auth-left { flex: 1; background: #534AB7; padding: 2.5rem; display: flex; flex-direction: column; justify-content: space-between; min-width: 260px; }
+    .auth-logo { font-size: 1.4rem; font-weight: 700; color: #fff; text-decoration: none; display: block; margin-bottom: 2rem; }
+    .auth-left-content h2 { font-size: 1.6rem; font-weight: 600; color: #fff; margin-bottom: 0.8rem; line-height: 1.4; }
+    .auth-left-content p { font-size: 0.9rem; color: #AFA9EC; line-height: 1.7; margin-bottom: 2rem; }
+    .auth-features { display: flex; flex-direction: column; gap: 1rem; }
+    .auth-feature { display: flex; align-items: flex-start; gap: 0.8rem; }
+    .auth-feature-icon { min-width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #fff; font-weight: 700; }
+    .auth-feature p { font-size: 0.85rem; color: #AFA9EC; line-height: 1.5; }
+    .auth-left-bottom { font-size: 0.75rem; color: #7F77DD; margin-top: 2rem; }
+    .auth-right { flex: 1.3; display: flex; align-items: center; justify-content: center; padding: 2.5rem; background: #fff; overflow-y: auto; }
+    .auth-form-wrap { width: 100%; max-width: 440px; }
+    .auth-form-header { margin-bottom: 1.8rem; }
+    .auth-form-header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .auth-form-header p { font-size: 0.9rem; color: #666; }
+    .auth-form-header a { color: #534AB7; text-decoration: none; font-weight: 500; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 500; color: #444; margin-bottom: 0.4rem; }
+    .form-group input, .form-group select { width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 0.9rem; color: #1a1a1a; background: #fff; transition: border-color 0.2s; font-family: inherit; appearance: none; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #534AB7; box-shadow: 0 0 0 3px rgba(83,74,183,0.1); }
+    .error-msg { font-size: 0.78rem; color: #e53e3e; margin-top: 0.3rem; display: block; min-height: 1rem; }
+    .password-wrap { position: relative; }
+    .password-wrap input { padding-right: 2.5rem; }
+    .eye-btn { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 0.9rem; padding: 0; color: #888; }
+    .strength-bar { display: flex; gap: 4px; margin-top: 6px; }
+    .strength-seg { flex: 1; height: 4px; border-radius: 2px; background: #e8e8e8; transition: background 0.3s; }
+    .strength-label { font-size: 0.78rem; margin-top: 0.3rem; display: block; font-weight: 500; }
+    .form-terms { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 1.2rem; }
+    .form-terms input[type="checkbox"] { margin-top: 3px; accent-color: #534AB7; min-width: 16px; width: 16px; height: 16px; }
+    .form-terms label { font-size: 0.82rem; color: #555; line-height: 1.5; cursor: pointer; }
+    .form-terms a { color: #534AB7; text-decoration: none; }
+    .btn-submit { width: 100%; padding: 0.8rem; font-size: 1rem; background: #534AB7; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background 0.2s; font-family: inherit; margin-bottom: 1.2rem; }
     .btn-submit:hover { background: #3C3489; }
-
-    /* ── Spinner ── */
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: inline-block;
-    }
-
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
     .hidden { display: none !important; }
-
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Divider ── */
-    .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      margin: 1rem 0;
-      color: #aaa;
-      font-size: 0.82rem;
-    }
-
-    .auth-divider::before,
-    .auth-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: #e8e8e8;
-    }
-
-    /* ── Google Button ── */
-    .btn-google {
-      width: 100%;
-      padding: 0.7rem;
-      background: #fff;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      color: #333;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      transition: background 0.2s;
-      font-family: inherit;
-    }
-
+    .auth-divider { display: flex; align-items: center; gap: 0.8rem; margin: 1rem 0; color: #aaa; font-size: 0.82rem; }
+    .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: #e8e8e8; }
+    .btn-google { width: 100%; padding: 0.7rem; background: #fff; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 0.9rem; color: #333; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.6rem; transition: background 0.2s; font-family: inherit; }
     .btn-google:hover { background: #f5f5f5; }
-
-    /* ── Switch Link ── */
-    .auth-switch {
-      text-align: center;
-      margin-top: 1.2rem;
-      font-size: 0.88rem;
-      color: #666;
-    }
-
-    .auth-switch a {
-      color: #534AB7;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    /* ── Responsive ── */
+    .auth-switch { text-align: center; margin-top: 1.2rem; font-size: 0.88rem; color: #666; }
+    .auth-switch a { color: #534AB7; text-decoration: none; font-weight: 500; }
     @media (max-width: 680px) {
       .auth-page { flex-direction: column; }
-      .auth-left { padding: 1.5rem; min-width: unset; }
+      .auth-left { padding: 1.5rem; min-width: unset; min-height: 160px; }
       .auth-left-content p, .auth-features { display: none; }
       .auth-left-content h2 { font-size: 1.2rem; margin-bottom: 0; }
       .auth-right { padding: 1.8rem 1.2rem; align-items: flex-start; }
@@ -346,49 +61,28 @@
   </style>
 </head>
 <body>
-  <script src="config.js"></script>
-
   <div class="auth-page">
-
-    <!-- Left Panel -->
     <div class="auth-left">
       <a href="index.html" class="auth-logo">ProjectAI</a>
       <div class="auth-left-content">
         <h2>Write your final year project with confidence</h2>
         <p>Join thousands of Nigerian and African students already using ProjectAI to complete their research projects.</p>
         <div class="auth-features">
-          <div class="auth-feature">
-            <div class="auth-feature-icon">✓</div>
-            <p>AI writes all five chapters for you</p>
-          </div>
-          <div class="auth-feature">
-            <div class="auth-feature-icon">✓</div>
-            <p>Output passes AI detection tools</p>
-          </div>
-          <div class="auth-feature">
-            <div class="auth-feature-icon">✓</div>
-            <p>Auto-generates charts, tables and references</p>
-          </div>
-          <div class="auth-feature">
-            <div class="auth-feature-icon">✓</div>
-            <p>Download as PDF or DOCX anytime</p>
-          </div>
+          <div class="auth-feature"><div class="auth-feature-icon">✓</div><p>AI writes all five chapters for you</p></div>
+          <div class="auth-feature"><div class="auth-feature-icon">✓</div><p>Output passes AI detection tools</p></div>
+          <div class="auth-feature"><div class="auth-feature-icon">✓</div><p>Auto-generates charts, tables and references</p></div>
+          <div class="auth-feature"><div class="auth-feature-icon">✓</div><p>Download as PDF or DOCX anytime</p></div>
         </div>
       </div>
       <div class="auth-left-bottom">&copy; 2025 ProjectAI. All rights reserved.</div>
     </div>
-
-    <!-- Right Panel -->
     <div class="auth-right">
       <div class="auth-form-wrap">
-
         <div class="auth-form-header">
           <h1>Create your account</h1>
           <p>Already have an account? <a href="login.html">Log in here</a></p>
         </div>
-
         <form id="signupForm">
-
           <div class="form-row">
             <div class="form-group">
               <label for="firstName">First name</label>
@@ -401,13 +95,11 @@
               <span class="error-msg" id="lastNameError"></span>
             </div>
           </div>
-
           <div class="form-group">
             <label for="signupEmail">Email address</label>
             <input type="email" id="signupEmail" placeholder="you@example.com" />
             <span class="error-msg" id="signupEmailError"></span>
           </div>
-
           <div class="form-row">
             <div class="form-group">
               <label for="university">University / Institution</label>
@@ -420,7 +112,6 @@
               <span class="error-msg" id="departmentError"></span>
             </div>
           </div>
-
           <div class="form-row">
             <div class="form-group">
               <label for="country">Country</label>
@@ -448,7 +139,6 @@
               <span class="error-msg" id="levelError"></span>
             </div>
           </div>
-
           <div class="form-group">
             <label for="signupPassword">Password</label>
             <div class="password-wrap">
@@ -464,7 +154,6 @@
             <span class="strength-label" id="strengthLabel"></span>
             <span class="error-msg" id="signupPasswordError"></span>
           </div>
-
           <div class="form-group">
             <label for="confirmPassword">Confirm password</label>
             <div class="password-wrap">
@@ -473,65 +162,44 @@
             </div>
             <span class="error-msg" id="confirmPasswordError"></span>
           </div>
-
           <div class="form-terms">
             <input type="checkbox" id="terms" />
-            <label for="terms">
-              I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I understand that my projects are stored securely.
-            </label>
+            <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I understand that my projects are stored securely.</label>
           </div>
           <span class="error-msg" id="termsError"></span>
-
           <button type="submit" class="btn-submit">
             <span id="signupBtnText">Create my account</span>
             <span id="signupSpinner" class="spinner hidden"></span>
           </button>
-
         </form>
-
         <div class="auth-divider"><span>or sign up with</span></div>
-
         <button class="btn-google" id="googleSignup">
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18" />
           Continue with Google
         </button>
-
-        <p class="auth-switch">
-          Already have an account? <a href="login.html">Log in</a>
-        </p>
-
+        <p class="auth-switch">Already have an account? <a href="login.html">Log in</a></p>
       </div>
     </div>
   </div>
 
   <script>
+    const API_URL = 'https://projectai-backend-production.up.railway.app';
+
     // ── Password Strength ──
     document.getElementById('signupPassword').addEventListener('input', function () {
       const val = this.value;
-      const segs = [
-        document.getElementById('seg1'),
-        document.getElementById('seg2'),
-        document.getElementById('seg3'),
-        document.getElementById('seg4')
-      ];
+      const segs = [document.getElementById('seg1'), document.getElementById('seg2'), document.getElementById('seg3'), document.getElementById('seg4')];
       const label = document.getElementById('strengthLabel');
       const colors = { weak: '#e53e3e', fair: '#dd6b20', good: '#d69e2e', strong: '#38a169' };
-
       segs.forEach(s => s.style.background = '#e8e8e8');
-
       let strength = 0;
       if (val.length >= 6) strength++;
       if (val.length >= 10) strength++;
       if (/[A-Z]/.test(val) && /[0-9]/.test(val)) strength++;
       if (/[^A-Za-z0-9]/.test(val)) strength++;
-
       const levels = ['', 'weak', 'fair', 'good', 'strong'];
       const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-
-      for (let i = 0; i < strength; i++) {
-        segs[i].style.background = colors[levels[strength]];
-      }
-
+      for (let i = 0; i < strength; i++) { segs[i].style.background = colors[levels[strength]]; }
       label.textContent = val.length > 0 ? labels[strength] : '';
       label.style.color = colors[levels[strength]] || '';
     });
@@ -553,14 +221,13 @@
     document.getElementById('signupForm').addEventListener('submit', function (e) {
       e.preventDefault();
       let valid = true;
-
       document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
 
       const fields = [
         { id: 'firstName', error: 'firstNameError', msg: 'First name is required.' },
         { id: 'lastName', error: 'lastNameError', msg: 'Last name is required.' },
         { id: 'university', error: 'universityError', msg: 'University name is required.' },
-        { id: 'department', error: 'departmentError', msg: 'Department is required.' },
+        { id: 'department', error: 'departmentError', msg: 'Department is required.' }
       ];
 
       fields.forEach(f => {
@@ -614,55 +281,49 @@
       }
 
       if (valid) {
-      const btnText = document.getElementById('signupBtnText');
-      const spinner = document.getElementById('signupSpinner');
-      btnText.textContent = 'Creating account...';
-      spinner.classList.remove('hidden');
+        const btnText = document.getElementById('signupBtnText');
+        const spinner = document.getElementById('signupSpinner');
+        btnText.textContent = 'Creating account...';
+        spinner.classList.remove('hidden');
 
-      // Send data to backend
-      fetch('${API_URL}/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: document.getElementById('firstName').value,
-          lastName: document.getElementById('lastName').value,
-          email: document.getElementById('signupEmail').value,
-          password: document.getElementById('signupPassword').value,
-          university: document.getElementById('university').value,
-          department: document.getElementById('department').value,
-          country: document.getElementById('country').value,
-          level: document.getElementById('level').value
+        fetch(API_URL + '/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName: document.getElementById('firstName').value,
+            lastName: document.getElementById('lastName').value,
+            email: email.value,
+            password: pwd.value,
+            university: document.getElementById('university').value,
+            department: document.getElementById('department').value,
+            country: document.getElementById('country').value,
+            level: document.getElementById('level').value
+          })
         })
-      })
-      .then(res => res.json())
-      .then(data => {
-        btnText.textContent = 'Create my account';
-        spinner.classList.add('hidden');
-
-        if (data.token) {
-          // Save token and user info
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          // Redirect to dashboard
-          window.location.href = 'dashboard.html';
-        } else {
-          // Show error from server
-          document.getElementById('signupEmailError').textContent = data.message || 'Something went wrong. Please try again.';
-        }
-      })
-      .catch(err => {
-        btnText.textContent = 'Create my account';
-        spinner.classList.add('hidden');
-        document.getElementById('signupEmailError').textContent = 'Could not connect to server. Please try again.';
-      });
-    }
+        .then(res => res.json())
+        .then(data => {
+          btnText.textContent = 'Create my account';
+          spinner.classList.add('hidden');
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            window.location.href = 'Dashboard.html';
+          } else {
+            document.getElementById('signupEmailError').textContent = data.message || 'Something went wrong. Please try again.';
+          }
+        })
+        .catch(err => {
+          btnText.textContent = 'Create my account';
+          spinner.classList.add('hidden');
+          document.getElementById('signupEmailError').textContent = 'Could not connect to server. Please try again.';
+        });
+      }
     });
 
     // ── Google Signup ──
     document.getElementById('googleSignup').addEventListener('click', () => {
-      alert('Google signup will be connected to the backend shortly.');
+      alert('Google signup coming soon!');
     });
   </script>
-
 </body>
 </html>
