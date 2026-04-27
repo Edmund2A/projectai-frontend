@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProjectAI — Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1a1a1a;
+      background: #f7f6fe;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: #fff;
+      border-right: 1px solid #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1.5rem 0;
+      transition: width 0.25s ease;
+      overflow: hidden;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 50;
+    }
+
+    .sidebar.collapsed { width: 60px; }
+
+    .sidebar-top {
+      padding: 0 1rem 1.2rem;
+      border-bottom: 1px solid #e8e8e8;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #534AB7;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+      text-decoration: none;
+    }
+
+    .sidebar.collapsed .sidebar-logo { opacity: 0; width: 0; overflow: hidden; }
+
+    .toggle-btn {
+      min-width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid #e8e8e8;
+      background: #f7f6fe;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .toggle-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: #666;
+      fill: none;
+      stroke-width: 2;
+      transition: transform 0.2s;
+    }
+
+    .sidebar.collapsed .toggle-btn svg { transform: rotate(180deg); }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 0 0.6rem;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.65rem 0.7rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: #555;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      position: relative;
+      transition: background 0.15s;
+    }
+
+    .nav-item:hover { background: #f7f6fe; color: #534AB7; }
+    .nav-item.active { background: #EEEDFE; color: #3C3489; font-weight: 600; }
+
+    .nav-item svg {
+      min-width: 18px;
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      flex-shrink: 0;
+    }
+
+    .nav-label { transition: opacity 0.15s; }
+    .sidebar.collapsed .nav-label { opacity: 0; width: 0; overflow: hidden; }
+
+    .nav-tooltip {
+      display: none;
+      position: absolute;
+      left: 52px;
+      background: #1a1a1a;
+      color: #fff;
+      border-radius: 6px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .sidebar.collapsed .nav-item:hover .nav-tooltip { display: block; }
+
+    .sidebar-bottom { padding: 0 0.6rem; }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.7rem;
+      border-radius: 8px;
+      border: 1px solid #e8e8e8;
+      background: #f7f6fe;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .avatar {
+      min-width: 32px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #EEEDFE;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #3C3489;
+      flex-shrink: 0;
+    }
+
+    .user-info { overflow: hidden; transition: opacity 0.15s; }
+    .user-info p { font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    .user-info span { font-size: 0.75rem; color: #888; white-space: nowrap; }
+    .sidebar.collapsed .user-info { opacity: 0; width: 0; }
+
+    /* ── Mobile Overlay ── */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 40;
+    }
+    .mobile-overlay.visible { display: block; }
+
+    /* ── Main Content ── */
+    .main {
+      flex: 1;
+      margin-left: 220px;
+      transition: margin-left 0.25s ease;
+      min-width: 0;
+    }
+
+    .main.expanded { margin-left: 60px; }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .hamburger {
+      display: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      border: 1px solid #e8e8e8;
+      background: transparent;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .hamburger svg {
+      width: 16px;
+      height: 16px;
+      stroke: #555;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .topbar h1 { font-size: 1.1rem; font-weight: 700; }
+    .topbar p { font-size: 0.82rem; color: #888; margin-top: 2px; }
+
+    .btn-new {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.2rem;
+      background: #534AB7;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-new:hover { background: #3C3489; }
+
+    .btn-new svg {
+      width: 15px;
+      height: 15px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 2.5;
+    }
+
+    /* ── Page Body ── */
+    .page-body { padding: 1.8rem 1.5rem; }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.2rem;
+    }
+
+    .stat-card span {
+      font-size: 0.78rem;
+      color: #888;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-card p {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #534AB7;
+    }
+
+    /* ── Section Header ── */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+
+    .section-header h2 { font-size: 1rem; font-weight: 700; }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .tab {
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      border: 1px solid #e8e8e8;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .tab.active {
+      background: #EEEDFE;
+      color: #3C3489;
+      border-color: #AFA9EC;
+      font-weight: 600;
+    }
+
+    /* ── Projects Grid ── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .project-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.3rem;
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.2s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .project-card:hover {
+      box-shadow: 0 6px 20px rgba(83,74,183,0.1);
+      transform: translateY(-3px);
+    }
+
+    .project-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.8rem;
+    }
+
+    .project-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #EEEDFE;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .project-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: #534AB7;
+      fill: none;
+      stroke-width: 1.8;
+    }
+
+    .status-badge {
+      font-size: 0.72rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .status-progress { background: #E1F5EE; color: #085041; }
+    .status-done { background: #EEEDFE; color: #3C3489; }
+    .status-draft { background: #f0f0f0; color: #666; }
+
+    .project-card h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      line-height: 1.4;
+    }
+
+    .project-dept {
+      font-size: 0.78rem;
+      color: #888;
+      margin-bottom: 1rem;
+    }
+
+    .progress-bar {
+      height: 5px;
+      background: #f0f0f0;
+      border-radius: 3px;
+      margin-bottom: 0.4rem;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #534AB7;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .progress-labels span { font-size: 0.75rem; color: #888; }
+
+    .project-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .project-footer span { font-size: 0.75rem; color: #aaa; }
+
+    .chapter-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #e8e8e8;
+      border: 1px solid #ddd;
+    }
+
+    .dot.done { background: #534AB7; border-color: #534AB7; }
+    .dot.active { background: #38a169; border-color: #38a169; }
+
+    /* ── New Project Card ── */
+    .new-project-card {
+      background: #fff;
+      border: 2px dashed #d0d0d0;
+      border-radius: 10px;
+      padding: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+      gap: 0.8rem;
+      transition: border-color 0.2s, background 0.2s;
+      text-decoration: none;
+    }
+
+    .new-project-card:hover {
+      border-color: #534AB7;
+      background: #f7f6fe;
+    }
+
+    .new-project-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #EEEDFE;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .new-project-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: #534AB7;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    .new-project-card p {
+      font-size: 0.88rem;
+      color: #888;
+      font-weight: 500;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+    }
+
+    .modal h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .modal p { font-size: 0.88rem; color: #666; margin-bottom: 1.5rem; }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #888;
+      line-height: 1;
+    }
+
+    .modal .form-group { margin-bottom: 1rem; }
+
+    .modal .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 0.4rem;
+    }
+
+    .modal .form-group input,
+    .modal .form-group select,
+    .modal .form-group textarea {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: #1a1a1a;
+      background: #fff;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .modal .form-group textarea { resize: vertical; min-height: 80px; }
+
+    .modal .form-group input:focus,
+    .modal .form-group select:focus,
+    .modal .form-group textarea:focus {
+      outline: none;
+      border-color: #534AB7;
+      box-shadow: 0 0 0 3px rgba(83,74,183,0.1);
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+    }
+
+    .btn-cancel {
+      padding: 0.65rem 1.2rem;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      background: transparent;
+      font-size: 0.88rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+
+    .btn-cancel:hover { background: #f5f5f5; }
+
+    .btn-create {
+      padding: 0.65rem 1.4rem;
+      background: #534AB7;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+
+    .btn-create:hover { background: #3C3489; }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #888;
+    }
+
+    .empty-state p { font-size: 0.9rem; margin-top: 0.5rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        width: 240px !important;
+        transition: transform 0.25s ease;
+      }
+
+      .sidebar.mobile-open { transform: translateX(0); }
+      .main { margin-left: 0 !important; }
+      .hamburger { display: flex; }
+      .topbar { padding: 0.9rem 1rem; }
+      .page-body { padding: 1.2rem 1rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .projects-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <script src="config.js"></script>
+
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
+
+  <!-- New Project Modal -->
+  <div class="modal-overlay" id="newProjectModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      <h2>Start a new project</h2>
+      <p>Fill in the details below and the AI will get started on your project.</p>
+
+      <div class="form-group">
+        <label for="projectTitle">Research topic / Project title</label>
+        <input type="text" id="projectTitle" placeholder="e.g. Impact of social media on academic performance" />
+      </div>
+
+      <div class="form-group">
+        <label for="projectDept">Department / Course</label>
+        <input type="text" id="projectDept" placeholder="e.g. Mass Communication" />
+      </div>
+
+      <div class="form-group">
+        <label for="projectLevel">Degree level</label>
+        <select id="projectLevel">
+          <option value="">Select level</option>
+          <option>Undergraduate (B.Sc / B.A / B.Ed)</option>
+          <option>Postgraduate (M.Sc / MBA)</option>
+          <option>Postgraduate (PhD)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="projectDesc">Brief description (optional)</label>
+        <textarea id="projectDesc" placeholder="Give the AI a brief idea of what your project is about..."></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-create" onclick="createProject()">Create project &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div>
+        <div class="sidebar-top">
+          <a href="index.html" class="sidebar-logo">ProjectAI</a>
+          <button class="toggle-btn" onclick="toggleSidebar()">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        </div>
+        <nav class="sidebar-nav">
+          <a href="dashboard.html" class="nav-item active">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span class="nav-label">Dashboard</span>
+            <span class="nav-tooltip">Dashboard</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="nav-label">My Projects</span>
+            <span class="nav-tooltip">My Projects</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="nav-label">History</span>
+            <span class="nav-tooltip">History</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <span class="nav-label">Settings</span>
+            <span class="nav-tooltip">Settings</span>
+          </a>
+          <a href="index.html" class="nav-item" style="margin-top: auto; color: #e53e3e;">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span class="nav-label">Log out</span>
+            <span class="nav-tooltip">Log out</span>
+          </a>
+        </nav>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="user-card">
+          <div class="avatar">AO</div>
+          <div class="user-info">
+            <p>Akacgi O.</p>
+            <span>Student plan</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main" id="main">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="hamburger" onclick="openSidebar()">
+            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div>
+            <h1>My Dashboard</h1>
+            <p>Welcome back, Akacgi. Here are your projects.</p>
+          </div>
+        </div>
+        <button class="btn-new" onclick="openModal()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New project
+        </button>
+      </div>
+
+      <!-- Page Body -->
+      <div class="page-body">
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>Total projects</span>
+            <p id="totalProjects">3</p>
+          </div>
+          <div class="stat-card">
+            <span>In progress</span>
+            <p id="inProgressCount">2</p>
+          </div>
+          <div class="stat-card">
+            <span>Completed</span>
+            <p id="completedCount">1</p>
+          </div>
+          <div class="stat-card">
+            <span>Downloads</span>
+            <p>3</p>
+          </div>
+        </div>
+
+        <!-- Projects -->
+        <div class="section-header">
+          <h2>All projects</h2>
+          <div class="filter-tabs">
+            <button class="tab active" onclick="filterProjects('all', this)">All</button>
+            <button class="tab" onclick="filterProjects('progress', this)">In progress</button>
+            <button class="tab" onclick="filterProjects('completed', this)">Completed</button>
+          </div>
+        </div>
+
+        <div class="projects-grid" id="projectsGrid"></div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──
+    let projects = [];
+    let currentFilter = 'all';
+
+    // ── Get user info from localStorage ──
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // ── Redirect if not logged in ──
+    if (!token) window.location.href = 'login.html';
+
+    // ── Update user info in sidebar ──
+    if (user.firstName) {
+      document.querySelector('.user-info p').textContent = user.firstName + ' ' + (user.lastName || '');
+      document.querySelector('.avatar').textContent = (user.firstName[0] + (user.lastName ? user.lastName[0] : '')).toUpperCase();
+      document.querySelector('.topbar p').textContent = `Welcome back, ${user.firstName}. Here are your projects.`;
+    }
+
+    // ── Fetch projects from backend ──
+    function fetchProjects() {
+      fetch('${API_URL}/api/projects', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        projects = data.map(p => ({
+          id: p.id,
+          title: p.title,
+          dept: (p.department || 'General') + ' · ' + (p.level || 'Undergraduate'),
+          status: p.status,
+          chapter: p.current_chapter || 1,
+          total: 5,
+          updated: formatDate(p.updated_at),
+          dots: generateDots(p.current_chapter || 1, p.status)
+        }));
+        renderProjects(currentFilter);
+      })
+      .catch(err => {
+        console.error('Error fetching projects:', err);
+        renderProjects(currentFilter);
+      });
+    }
+
+    // ── Format date ──
+    function formatDate(dateString) {
+      if (!dateString) return 'Just now';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = Math.floor((now - date) / 1000);
+
+      if (diff < 60) return 'Just now';
+      if (diff < 3600) return Math.floor(diff / 60) + ' minutes ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + ' hours ago';
+      if (diff < 604800) return Math.floor(diff / 86400) + ' days ago';
+      return date.toLocaleDateString();
+    }
+
+    // ── Generate chapter dots ──
+    function generateDots(currentChapter, status) {
+      const dots = [];
+      for (let i = 1; i <= 5; i++) {
+        if (status === 'completed') {
+          dots.push('done');
+        } else if (i < currentChapter) {
+          dots.push('done');
+        } else if (i === currentChapter) {
+          dots.push('active');
+        } else {
+          dots.push('');
+        }
+      }
+      return dots;
+    }
+
+    // ── Render Projects ──
+    function renderProjects(filter) {
+      const grid = document.getElementById('projectsGrid');
+      const filtered = filter === 'all' ? projects : projects.filter(p => p.status === filter);
+
+      grid.innerHTML = '';
+
+      if (filtered.length === 0 && filter === 'all') {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 3rem; color: #888;';
+        empty.innerHTML = '<p style="font-size:1rem;margin-bottom:0.5rem;">No projects yet</p><p style="font-size:0.85rem;">Click the New project button to get started!</p>';
+        grid.appendChild(empty);
+      }
+
+      filtered.forEach(p => {
+        const percent = Math.round((p.chapter / p.total) * 100);
+        const statusLabel = p.status === 'completed' ? 'Completed' : 'In progress';
+        const statusClass = p.status === 'completed' ? 'status-done' : 'status-progress';
+        const dots = p.dots.map(d => `<div class="dot ${d}"></div>`).join('');
+
+        const card = document.createElement('div');
+        card.className = 'project-card';
+        card.onclick = () => openProject(p.id, p.title);
+        card.innerHTML = `
+          <div class="project-card-top">
+            <div class="project-icon">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <span class="status-badge ${statusClass}">${statusLabel}</span>
+          </div>
+          <h3>${p.title}</h3>
+          <p class="project-dept">${p.dept}</p>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: ${percent}%"></div>
+          </div>
+          <div class="progress-labels">
+            <span>${p.status === 'completed' ? 'All chapters done' : 'Chapter ' + p.chapter + ' of ' + p.total}</span>
+            <span>${percent}%</span>
+          </div>
+          <div class="project-footer">
+            <span>Updated ${p.updated}</span>
+            <div class="chapter-dots">${dots}</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      // Add new project card
+      const newCard = document.createElement('div');
+      newCard.className = 'new-project-card';
+      newCard.onclick = openModal;
+      newCard.innerHTML = `
+        <div class="new-project-icon">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <p>Start a new project</p>
+      `;
+      grid.appendChild(newCard);
+
+      // Update stats
+      document.getElementById('totalProjects').textContent = projects.length;
+      document.getElementById('inProgressCount').textContent = projects.filter(p => p.status === 'progress').length;
+      document.getElementById('completedCount').textContent = projects.filter(p => p.status === 'completed').length;
+    }
+
+    // ── Open project ──
+    function openProject(id, title) {
+      localStorage.setItem('projectId', id);
+      localStorage.setItem('projectTitle', title);
+      window.location.href = 'editor.html';
+    }
+
+    // ── Filter ──
+    function filterProjects(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderProjects(filter);
+    }
+
+    // ── Sidebar ──
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('main');
+      sidebar.classList.toggle('collapsed');
+      main.classList.toggle('expanded');
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('mobileOverlay').classList.add('visible');
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('mobileOverlay').classList.remove('visible');
+    }
+
+    // ── Modal ──
+    function openModal() {
+      document.getElementById('newProjectModal').classList.add('visible');
+    }
+
+    function closeModal() {
+      document.getElementById('newProjectModal').classList.remove('visible');
+      document.getElementById('projectTitle').value = '';
+      document.getElementById('projectDept').value = '';
+      document.getElementById('projectLevel').value = '';
+      document.getElementById('projectDesc').value = '';
+    }
+
+    // ── Create project ──
+    function createProject() {
+      const title = document.getElementById('projectTitle').value.trim();
+      const dept = document.getElementById('projectDept').value.trim();
+      const level = document.getElementById('projectLevel').value;
+      const desc = document.getElementById('projectDesc').value.trim();
+
+      if (!title) { alert('Please enter a project title.'); return; }
+      if (!dept) { alert('Please enter your department.'); return; }
+      if (!level) { alert('Please select your degree level.'); return; }
+
+      const createBtn = document.querySelector('.btn-create');
+      createBtn.textContent = 'Creating...';
+      createBtn.disabled = true;
+
+      fetch('http://localhost:5000/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title,
+          department: dept,
+          level,
+          description: desc
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        createBtn.textContent = 'Create project →';
+        createBtn.disabled = false;
+        closeModal();
+
+        if (data.id) {
+          localStorage.setItem('projectId', data.id);
+          localStorage.setItem('projectTitle', data.title);
+          window.location.href = 'editor.html';
+        } else {
+          alert(data.message || 'Error creating project. Please try again.');
+        }
+      })
+      .catch(err => {
+        createBtn.textContent = 'Create project →';
+        createBtn.disabled = false;
+        alert('Could not connect to server. Please try again.');
+      });
+    }
+
+    // ── Init ──
+    fetchProjects();
+  </script>
+
+</body>
+</html>

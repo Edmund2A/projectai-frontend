@@ -1,0 +1,69 @@
+/* ── Signup Specific Styles ── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Password strength bar */
+.strength-bar {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.strength-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #e8e8e8;
+  transition: background 0.3s;
+}
+
+.strength-seg.weak { background: #e53e3e; }
+.strength-seg.fair { background: #dd6b20; }
+.strength-seg.good { background: #d69e2e; }
+.strength-seg.strong { background: #38a169; }
+
+.strength-label {
+  font-size: 0.78rem;
+  margin-top: 0.3rem;
+  display: block;
+  font-weight: 500;
+}
+
+/* Terms checkbox */
+.form-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
+}
+
+.form-terms input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: #534AB7;
+  min-width: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.form-terms label {
+  font-size: 0.82rem;
+  color: #555;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.form-terms a {
+  color: #534AB7;
+  text-decoration: none;
+}
+
+/* Responsive form row */
+@media (max-width: 500px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

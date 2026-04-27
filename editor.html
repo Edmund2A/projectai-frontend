@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProjectAI — Chapter Editor</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1a1a1a;
+      background: #f7f6fe;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .layout { display: flex; height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: #fff;
+      border-right: 1px solid #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1.5rem 0;
+      transition: width 0.25s ease;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .sidebar.collapsed { width: 60px; }
+
+    .sidebar-top {
+      padding: 0 1rem 1.2rem;
+      border-bottom: 1px solid #e8e8e8;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #534AB7;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+      text-decoration: none;
+    }
+
+    .sidebar.collapsed .sidebar-logo { opacity: 0; width: 0; overflow: hidden; }
+
+    .toggle-btn {
+      min-width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid #e8e8e8;
+      background: #f7f6fe;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .toggle-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: #666;
+      fill: none;
+      stroke-width: 2;
+      transition: transform 0.2s;
+    }
+
+    .sidebar.collapsed .toggle-btn svg { transform: rotate(180deg); }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 0 0.6rem;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.65rem 0.7rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: #555;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      position: relative;
+      transition: background 0.15s;
+    }
+
+    .nav-item:hover { background: #f7f6fe; color: #534AB7; }
+    .nav-item.active { background: #EEEDFE; color: #3C3489; font-weight: 600; }
+
+    .nav-item svg {
+      min-width: 18px;
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      flex-shrink: 0;
+    }
+
+    .nav-label { transition: opacity 0.15s; }
+    .sidebar.collapsed .nav-label { opacity: 0; width: 0; overflow: hidden; }
+
+    .nav-tooltip {
+      display: none;
+      position: absolute;
+      left: 52px;
+      background: #1a1a1a;
+      color: #fff;
+      border-radius: 6px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .sidebar.collapsed .nav-item:hover .nav-tooltip { display: block; }
+
+    .sidebar-bottom { padding: 0 0.6rem; }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.7rem;
+      border-radius: 8px;
+      border: 1px solid #e8e8e8;
+      background: #f7f6fe;
+      overflow: hidden;
+    }
+
+    .avatar {
+      min-width: 32px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #EEEDFE;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #3C3489;
+      flex-shrink: 0;
+    }
+
+    .user-info { overflow: hidden; transition: opacity 0.15s; }
+    .user-info p { font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+    .user-info span { font-size: 0.75rem; color: #888; white-space: nowrap; }
+    .sidebar.collapsed .user-info { opacity: 0; width: 0; }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+      padding: 0.85rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 0.8rem; min-width: 0; }
+
+    .hamburger {
+      display: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      border: 1px solid #e8e8e8;
+      background: transparent;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .hamburger svg { width: 16px; height: 16px; stroke: #555; fill: none; stroke-width: 2; }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: #666;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      white-space: nowrap;
+      font-family: inherit;
+      text-decoration: none;
+    }
+
+    .back-btn svg { width: 14px; height: 14px; stroke: #666; fill: none; stroke-width: 2; }
+
+    .divider-v { width: 1px; height: 18px; background: #e8e8e8; flex-shrink: 0; }
+
+    .project-title-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .topbar-right { display: flex; gap: 0.6rem; align-items: center; flex-shrink: 0; }
+
+    .btn-outline {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1rem;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      background: transparent;
+      color: #333;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .btn-outline:hover { background: #f5f5f5; }
+    .btn-outline svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    .btn-save {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1rem;
+      background: #534AB7;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .btn-save:hover { background: #3C3489; }
+    .btn-save svg { width: 13px; height: 13px; stroke: #fff; fill: none; stroke-width: 2; }
+
+    /* ── Editor Body ── */
+    .editor-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Chapter Nav ── */
+    .chapter-nav {
+      width: 190px;
+      border-right: 1px solid #e8e8e8;
+      background: #fff;
+      padding: 1.2rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .chapter-nav h4 {
+      font-size: 0.72rem;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.6rem;
+      padding: 0 0.4rem;
+    }
+
+    .chapter-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.6rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: #555;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .chapter-item:hover { background: #f7f6fe; }
+    .chapter-item.active { background: #EEEDFE; color: #3C3489; font-weight: 600; }
+
+    .ch-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .ch-dot.done { background: #534AB7; }
+    .ch-dot.active { background: #38a169; }
+    .ch-dot.pending { background: #e8e8e8; border: 1px solid #d0d0d0; }
+
+    /* ── Mobile Chapter Strip ── */
+    .chapter-strip {
+      display: none;
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid #e8e8e8;
+      background: #fff;
+      overflow-x: auto;
+      white-space: nowrap;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .chapter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      border: 1px solid #e8e8e8;
+      color: #666;
+      cursor: pointer;
+      background: #fff;
+      transition: all 0.15s;
+    }
+
+    .chapter-pill.active { background: #EEEDFE; color: #3C3489; border-color: #AFA9EC; font-weight: 600; }
+
+    /* ── Editor Area ── */
+    .editor-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+    .editor-header {
+      padding: 1rem 1.2rem 0.8rem;
+      border-bottom: 1px solid #e8e8e8;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .editor-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .editor-header h2 { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .editor-header p { font-size: 0.8rem; color: #888; }
+
+    .status-badge {
+      font-size: 0.72rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .status-progress { background: #E1F5EE; color: #085041; }
+    .status-done { background: #EEEDFE; color: #3C3489; }
+
+    /* ── Content Area ── */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    /* ── Generate Section ── */
+    .generate-section {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .generate-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .generate-section p { font-size: 0.85rem; color: #888; margin-bottom: 1.5rem; }
+
+    .btn-generate {
+      padding: 0.75rem 2rem;
+      background: #534AB7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .btn-generate:hover { background: #3C3489; }
+
+    /* ── Content Block ── */
+    .content-block {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.4rem;
+    }
+
+    .content-block-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    .content-block-header h4 { font-size: 0.88rem; font-weight: 600; color: #555; }
+
+    .ai-badge {
+      font-size: 0.7rem;
+      background: #EEEDFE;
+      color: #3C3489;
+      padding: 0.15rem 0.55rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .content-text { font-size: 0.88rem; line-height: 1.85; color: #2a2a2a; }
+    .content-text p { margin-bottom: 0.9rem; }
+    .content-text p:last-child { margin-bottom: 0; }
+
+    .content-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 0.9rem;
+      border-top: 1px solid #f0f0f0;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid #e8e8e8;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      background: transparent;
+      color: #555;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .action-btn:hover { background: #f7f6fe; border-color: #534AB7; color: #534AB7; }
+    .action-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    /* ── Charts Block ── */
+    .charts-block {
+      background: #fff;
+      border: 1px solid #AFA9EC;
+      border-radius: 10px;
+      padding: 1.4rem;
+    }
+
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+
+    .chart-box {
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .chart-box canvas { max-height: 180px; }
+    .chart-box p { font-size: 0.75rem; color: #888; margin-top: 0.6rem; }
+
+    /* ── Upload Section ── */
+    .upload-section {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f7f6fe;
+      border-radius: 8px;
+    }
+
+    .upload-section p { font-size: 0.82rem; color: #555; font-weight: 600; margin-bottom: 0.6rem; }
+
+    .upload-row { display: flex; gap: 0.6rem; align-items: center; }
+
+    .upload-drop {
+      flex: 1;
+      border: 1px dashed #d0d0d0;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+      color: #aaa;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .upload-drop:hover { border-color: #534AB7; color: #534AB7; }
+
+    .btn-browse {
+      padding: 0.55rem 1rem;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .btn-browse:hover { background: #f5f5f5; }
+
+    /* ── Prompt Area ── */
+    .prompt-area {
+      padding: 1rem 1.2rem;
+      border-top: 1px solid #e8e8e8;
+      background: #fff;
+      flex-shrink: 0;
+    }
+
+    .prompt-label {
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .prompt-label svg { width: 13px; height: 13px; stroke: #534AB7; fill: none; stroke-width: 2; }
+
+    .prompt-box { display: flex; gap: 0.6rem; align-items: flex-end; }
+
+    .prompt-input {
+      flex: 1;
+      padding: 0.7rem 1rem;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      resize: none;
+      background: #f7f6fe;
+      color: #1a1a1a;
+      font-family: inherit;
+      min-height: 44px;
+      max-height: 120px;
+      transition: border-color 0.2s;
+      line-height: 1.5;
+    }
+
+    .prompt-input:focus {
+      outline: none;
+      border-color: #534AB7;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(83,74,183,0.08);
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #534AB7;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    .send-btn:hover { background: #3C3489; }
+    .send-btn svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; }
+
+    .prompt-suggestions { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+
+    .suggestion {
+      padding: 0.3rem 0.8rem;
+      border: 1px solid #e8e8e8;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: #666;
+      cursor: pointer;
+      background: transparent;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .suggestion:hover { border-color: #534AB7; color: #534AB7; background: #f7f6fe; }
+
+    /* ── Loading ── */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.85);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .loading-overlay.visible { display: flex; }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #EEEDFE;
+      border-top-color: #534AB7;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-text { font-size: 0.9rem; color: #534AB7; font-weight: 500; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Download Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+    }
+
+    .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .modal > p { font-size: 0.85rem; color: #666; margin-bottom: 1.5rem; }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #888;
+    }
+
+    .download-options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+
+    .download-option {
+      border: 2px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .download-option:hover { border-color: #534AB7; background: #f7f6fe; }
+    .download-option.selected { border-color: #534AB7; background: #EEEDFE; }
+    .download-option .d-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .download-option h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .download-option p { font-size: 0.75rem; color: #888; margin-bottom: 0; }
+
+    .ref-style-group { margin-bottom: 1.2rem; }
+
+    .ref-style-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 0.4rem;
+    }
+
+    .ref-style-group select {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+      color: #1a1a1a;
+    }
+
+    .ref-style-group select:focus { outline: none; border-color: #534AB7; }
+
+    .btn-download-confirm {
+      width: 100%;
+      padding: 0.8rem;
+      background: #534AB7;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+
+    .btn-download-confirm:hover { background: #3C3489; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        height: 100vh;
+        z-index: 50;
+        transform: translateX(-100%);
+        width: 240px !important;
+        transition: transform 0.25s ease;
+      }
+
+      .sidebar.mobile-open { transform: translateX(0); }
+      .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 40; }
+      .mobile-overlay.visible { display: block; }
+      .hamburger { display: flex; }
+      .chapter-nav { display: none; }
+      .chapter-strip { display: flex; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .topbar-right .btn-outline { display: none; }
+      .project-title-text { max-width: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <script src="config.js"></script>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">AI is writing your chapter...</div>
+  </div>
+
+  <!-- Mobile Overlay -->
+  <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
+
+  <!-- Download Modal -->
+  <div class="modal-overlay" id="downloadModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeDownloadModal()">&#x2715;</button>
+      <h2>Download your project</h2>
+      <p>Choose your preferred format and reference style before downloading.</p>
+      <div class="download-options">
+        <div class="download-option selected" id="pdfOption" onclick="selectFormat('pdf')">
+          <div class="d-icon">📄</div>
+          <h3>PDF</h3>
+          <p>Best for submitting</p>
+        </div>
+        <div class="download-option" id="docxOption" onclick="selectFormat('docx')">
+          <div class="d-icon">📝</div>
+          <h3>DOCX</h3>
+          <p>Best for editing</p>
+        </div>
+      </div>
+      <div class="ref-style-group">
+        <label>Reference style</label>
+        <select id="refStyle">
+          <option value="APA 7th edition">APA (7th Edition)</option>
+          <option value="Harvard">Harvard</option>
+          <option value="Chicago">Chicago</option>
+          <option value="MLA">MLA</option>
+          <option value="Vancouver">Vancouver</option>
+        </select>
+      </div>
+      <button class="btn-download-confirm" onclick="confirmDownload()">Download project &darr;</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div>
+        <div class="sidebar-top">
+          <a href="index.html" class="sidebar-logo">ProjectAI</a>
+          <button class="toggle-btn" onclick="toggleSidebar()">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+        </div>
+        <nav class="sidebar-nav">
+          <a href="dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span class="nav-label">Dashboard</span>
+            <span class="nav-tooltip">Dashboard</span>
+          </a>
+          <a href="dashboard.html" class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="nav-label">My Projects</span>
+            <span class="nav-tooltip">My Projects</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="nav-label">History</span>
+            <span class="nav-tooltip">History</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            <span class="nav-label">Settings</span>
+            <span class="nav-tooltip">Settings</span>
+          </a>
+          <a href="index.html" class="nav-item" style="color:#e53e3e;">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span class="nav-label">Log out</span>
+            <span class="nav-tooltip">Log out</span>
+          </a>
+        </nav>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="user-card" id="userCard">
+          <div class="avatar" id="userAvatar">AO</div>
+          <div class="user-info">
+            <p id="userName">Student</p>
+            <span>Student plan</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <button class="hamburger" onclick="openMobileSidebar()">
+            <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <a href="dashboard.html" class="back-btn">
+            <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+          </a>
+          <div class="divider-v"></div>
+          <div class="project-title-text" id="projectTitleDisplay">My Project</div>
+        </div>
+        <div class="topbar-right">
+          <button class="btn-outline" onclick="openDownloadModal()">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </button>
+          <button class="btn-save" onclick="saveProgress()">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Save progress
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Chapter Strip -->
+      <div class="chapter-strip" id="chapterStrip"></div>
+
+      <div class="editor-body">
+
+        <!-- Chapter Nav -->
+        <div class="chapter-nav" id="chapterNav"></div>
+
+        <!-- Editor Area -->
+        <div class="editor-area">
+          <div class="editor-header">
+            <div class="editor-header-row">
+              <div>
+                <h2 id="chapterTitle">Chapter 1 — Introduction</h2>
+                <p id="chapterSubtitle">Click generate to let the AI write this chapter for you</p>
+              </div>
+              <span class="status-badge status-progress" id="chapterStatus">Not started</span>
+            </div>
+          </div>
+
+          <div class="content-area" id="contentArea"></div>
+
+          <div class="prompt-area">
+            <div class="prompt-label">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Prompt the AI to generate or make changes to this chapter
+            </div>
+            <div class="prompt-box">
+              <textarea class="prompt-input" id="promptInput" placeholder="e.g. Write chapter one for my project on social media and academic performance..." rows="1"></textarea>
+              <button class="send-btn" onclick="sendPrompt()">
+                <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+            <div class="prompt-suggestions" id="promptSuggestions"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──
+    let currentChapter = 1;
+    let selectedFormat = 'pdf';
+    let chartInstances = [];
+    let barChartType = 'bar';
+    let pieChartType = 'pie';
+    let generatedContent = {};
+
+    // ── Get project info from localStorage ──
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = localStorage.getItem('token');
+    const currentProjectTitle = localStorage.getItem('projectTitle') || 'My Research Project';
+
+    // ── Redirect if not logged in ──
+    if (!token) window.location.href = 'login.html';
+
+    // ── Update UI with user info ──
+    if (user.firstName) {
+      document.getElementById('userName').textContent = user.firstName + ' ' + (user.lastName || '');
+      document.getElementById('userAvatar').textContent = (user.firstName[0] + (user.lastName ? user.lastName[0] : '')).toUpperCase();
+      document.getElementById('projectTitleDisplay').textContent = currentProjectTitle;
+    }
+
+    // ── Chapter Data ──
+    const chapters = [
+      { id: 1, title: 'Chapter 1 — Introduction', short: 'Ch 1', status: 'pending', suggestions: ['Write chapter one', 'Expand the background section', 'Make the objectives clearer', 'Add more to the significance', 'Shorten the introduction'] },
+      { id: 2, title: 'Chapter 2 — Literature Review', short: 'Ch 2', status: 'pending', suggestions: ['Write chapter two', 'Add more recent studies', 'Expand the theoretical framework', 'Include Nigerian authors', 'Summarise the gap in literature'] },
+      { id: 3, title: 'Chapter 3 — Methodology', short: 'Ch 3', status: 'pending', suggestions: ['Write chapter three', 'Change pie chart to bar chart', 'Add more data sources', 'Expand sampling technique', 'Change chart type'] },
+      { id: 4, title: 'Chapter 4 — Data Analysis', short: 'Ch 4', status: 'pending', suggestions: ['Write chapter four', 'Add hypothesis testing', 'Expand the discussion', 'Link findings to literature'] },
+      { id: 5, title: 'Chapter 5 — Conclusion', short: 'Ch 5', status: 'pending', suggestions: ['Write chapter five', 'Add recommendations', 'Expand the conclusion', 'Summarise key findings'] },
+      { id: 6, title: 'References', short: 'Refs', status: 'pending', suggestions: ['Generate APA references', 'Generate Harvard references', 'Generate Chicago references', 'Add missing references'] }
+    ];
+
+    // ── Build Chapter Nav ──
+    function buildChapterNav() {
+      const nav = document.getElementById('chapterNav');
+      const strip = document.getElementById('chapterStrip');
+      nav.innerHTML = '<h4>Chapters</h4>';
+      strip.innerHTML = '';
+
+      chapters.forEach(ch => {
+        const item = document.createElement('div');
+        item.className = `chapter-item ${ch.id === currentChapter ? 'active' : ''}`;
+        item.onclick = () => switchChapter(ch.id);
+        item.innerHTML = `<div class="ch-dot ${ch.status}"></div><span>${ch.title}</span>`;
+        nav.appendChild(item);
+
+        const pill = document.createElement('div');
+        pill.className = `chapter-pill ${ch.id === currentChapter ? 'active' : ''}`;
+        pill.onclick = () => switchChapter(ch.id);
+        pill.innerHTML = `<div class="ch-dot ${ch.status}" style="width:7px;height:7px;"></div>${ch.short}`;
+        strip.appendChild(pill);
+      });
+    }
+
+    // ── Switch Chapter ──
+    function switchChapter(id) {
+      currentChapter = id;
+      buildChapterNav();
+
+      const ch = chapters.find(c => c.id === id);
+      document.getElementById('chapterTitle').textContent = ch.title;
+
+      const contentArea = document.getElementById('contentArea');
+      const statusBadge = document.getElementById('chapterStatus');
+      const subtitle = document.getElementById('chapterSubtitle');
+
+      chartInstances.forEach(c => c.destroy());
+      chartInstances = [];
+
+      if (ch.status === 'pending') {
+        statusBadge.textContent = 'Not started';
+        statusBadge.className = 'status-badge status-progress';
+        subtitle.textContent = 'Click generate or use the prompt box below to start this chapter';
+        contentArea.innerHTML = `
+          <div class="generate-section">
+            <h3>Ready to write ${ch.title}?</h3>
+            <p>Click the button below and the AI will write this chapter for you based on your project topic.</p>
+            <button class="btn-generate" onclick="generateChapter(${id})">✨ Generate ${ch.title}</button>
+          </div>
+        `;
+      } else {
+        statusBadge.textContent = ch.status === 'done' ? 'Completed' : 'In progress';
+        statusBadge.className = `status-badge ${ch.status === 'done' ? 'status-done' : 'status-progress'}`;
+        subtitle.textContent = 'Review the content below and use the prompt box to make changes';
+        renderContent(id);
+      }
+
+      renderSuggestions(ch.suggestions);
+    }
+
+    // ── Render Content ──
+    function renderContent(id) {
+      const contentArea = document.getElementById('contentArea');
+      const text = generatedContent[id] || '';
+      const paragraphs = text.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+
+      let html = `
+        <div class="content-block">
+          <div class="content-block-header">
+            <h4>Generated content</h4>
+            <span class="ai-badge">AI</span>
+          </div>
+          <div class="content-text" id="contentText${id}">${paragraphs}</div>
+          <div class="content-actions">
+            <button class="action-btn" onclick="generateChapter(${id})">
+              <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+              Regenerate
+            </button>
+            <button class="action-btn" onclick="copyText(${id})">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy text
+            </button>
+            <button class="action-btn" onclick="makeEditable(${id})">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit manually
+            </button>
+          </div>
+        </div>
+      `;
+
+      if (id === 3) {
+        html += `
+          <div class="charts-block">
+            <div class="content-block-header">
+              <h4>Charts & data visualisation</h4>
+              <span class="ai-badge">AI</span>
+            </div>
+            <div class="charts-grid">
+              <div class="chart-box">
+                <canvas id="barChart"></canvas>
+                <p>Social media usage frequency by platform</p>
+              </div>
+              <div class="chart-box">
+                <canvas id="pieChart"></canvas>
+                <p>Academic impact distribution</p>
+              </div>
+            </div>
+            <div class="upload-section">
+              <p>Upload your own dataset</p>
+              <div class="upload-row">
+                <div class="upload-drop" onclick="document.getElementById('fileInput').click()">
+                  📂 Drop CSV or Excel file here, or click to browse
+                </div>
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleFileUpload(event)" />
+              </div>
+            </div>
+            <div class="content-actions">
+              <button class="action-btn" onclick="regenerateCharts()">
+                <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+                Regenerate charts
+              </button>
+              <button class="action-btn" onclick="switchChartType()">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Change chart type
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      contentArea.innerHTML = html;
+
+      if (id === 3) {
+        setTimeout(() => renderCharts(), 100);
+      }
+    }
+
+    // ── Render Charts ──
+    function renderCharts() {
+      chartInstances.forEach(c => c.destroy());
+      chartInstances = [];
+
+      const barCtx = document.getElementById('barChart');
+      const pieCtx = document.getElementById('pieChart');
+
+      if (barCtx) {
+        const bar = new Chart(barCtx, {
+          type: barChartType,
+          data: {
+            labels: ['WhatsApp', 'Instagram', 'Twitter', 'Facebook', 'TikTok'],
+            datasets: [{
+              label: 'Usage (%)',
+              data: [89, 71, 59, 45, 38],
+              backgroundColor: ['#534AB7','#7B74D4','#9F99E0','#C3BFEC','#E7E5F7'],
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: barChartType === 'bar' || barChartType === 'line' ? { y: { beginAtZero: true, max: 100 } } : {}
+          }
+        });
+        chartInstances.push(bar);
+      }
+
+      if (pieCtx) {
+        const pie = new Chart(pieCtx, {
+          type: pieChartType,
+          data: {
+            labels: ['Negative impact', 'Positive impact', 'Neutral', 'Mixed'],
+            datasets: [{
+              data: [45, 25, 18, 12],
+              backgroundColor: ['#534AB7','#38a169','#d69e2e','#e53e3e']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }
+          }
+        });
+        chartInstances.push(pie);
+      }
+    }
+
+    // ── Switch Chart Type ──
+    function switchChartType() {
+      const barTypes = ['bar', 'line'];
+      const pieTypes = ['pie', 'doughnut', 'polarArea'];
+      barChartType = barTypes[(barTypes.indexOf(barChartType) + 1) % barTypes.length];
+      pieChartType = pieTypes[(pieTypes.indexOf(pieChartType) + 1) % pieTypes.length];
+      renderCharts();
+      showToast('Chart type updated!');
+    }
+
+    // ── Render Suggestions ──
+    function renderSuggestions(suggestions) {
+      const container = document.getElementById('promptSuggestions');
+      container.innerHTML = '';
+      suggestions.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'suggestion';
+        btn.textContent = s;
+        btn.onclick = () => {
+          document.getElementById('promptInput').value = s;
+          document.getElementById('promptInput').focus();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    // ── Generate Chapter ──
+    function generateChapter(id) {
+      const ch = chapters.find(c => c.id === id);
+      if (!token) { window.location.href = 'login.html'; return; }
+
+      showLoading(`AI is writing ${ch.title}...`);
+
+      fetch('${API_URL}/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          topic: currentProjectTitle,
+          chapterNumber: id
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        hideLoading();
+        if (data.content) {
+          generatedContent[id] = data.content;
+          ch.status = 'active';
+          switchChapter(id);
+          showToast(`${ch.title} generated successfully!`);
+        } else {
+          showToast(data.message || 'Error generating chapter. Please try again.');
+        }
+      })
+      .catch(() => {
+        hideLoading();
+        showToast('Could not connect to server. Please try again.');
+      });
+    }
+
+    // ── Send Prompt ──
+    function sendPrompt() {
+      const input = document.getElementById('promptInput');
+      const prompt = input.value.trim();
+      if (!prompt) { input.focus(); return; }
+      if (!token) { window.location.href = 'login.html'; return; }
+
+      const ch = chapters.find(c => c.id === currentChapter);
+      const existingContent = generatedContent[currentChapter];
+
+      showLoading('AI is processing your request...');
+      input.value = '';
+
+      if (existingContent && ch.status !== 'pending') {
+        fetch('${API_URL}/api/ai/edit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            content: existingContent,
+            userPrompt: prompt,
+            chapterNumber: currentChapter
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          hideLoading();
+          if (data.content) {
+            generatedContent[currentChapter] = data.content;
+            switchChapter(currentChapter);
+            showToast('Changes applied successfully!');
+          } else {
+            showToast(data.message || 'Error applying changes. Please try again.');
+          }
+        })
+        .catch(() => {
+          hideLoading();
+          showToast('Could not connect to server. Please try again.');
+        });
+      } else {
+        fetch('${API_URL}/api/ai/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            topic: currentProjectTitle,
+            chapterNumber: currentChapter,
+            userPrompt: prompt
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          hideLoading();
+          if (data.content) {
+            generatedContent[currentChapter] = data.content;
+            ch.status = 'active';
+            switchChapter(currentChapter);
+            showToast('Chapter generated successfully!');
+          } else {
+            showToast(data.message || 'Error generating chapter. Please try again.');
+          }
+        })
+        .catch(() => {
+          hideLoading();
+          showToast('Could not connect to server. Please try again.');
+        });
+      }
+    }
+
+    // ── Regenerate Charts ──
+    function regenerateCharts() {
+      showLoading('Regenerating charts...');
+      setTimeout(() => { hideLoading(); renderCharts(); showToast('Charts regenerated!'); }, 1000);
+    }
+
+    // ── Copy Text ──
+    function copyText(id) {
+      const text = generatedContent[id] || '';
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Text copied to clipboard!');
+      }).catch(() => {
+        showToast('Copy failed. Please copy manually.');
+      });
+    }
+
+    // ── Edit Manually ──
+    function makeEditable(id) {
+      const contentText = document.getElementById(`contentText${id}`);
+      if (!contentText) return;
+      contentText.contentEditable = 'true';
+      contentText.style.outline = '2px solid #534AB7';
+      contentText.style.borderRadius = '6px';
+      contentText.style.padding = '0.5rem';
+      contentText.focus();
+      showToast('You can now edit the text directly. Click elsewhere when done.');
+    }
+
+    // ── Save Progress ──
+    function saveProgress() {
+      showLoading('Saving your progress...');
+      setTimeout(() => { hideLoading(); showToast('Progress saved successfully!'); }, 1000);
+    }
+
+    // ── Handle File Upload ──
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      showLoading(`Processing ${file.name}...`);
+      setTimeout(() => { hideLoading(); renderCharts(); showToast(`Dataset "${file.name}" uploaded and charts updated!`); }, 2000);
+    }
+
+    // ── Download Modal ──
+    function openDownloadModal() { document.getElementById('downloadModal').classList.add('visible'); }
+    function closeDownloadModal() { document.getElementById('downloadModal').classList.remove('visible'); }
+
+    function selectFormat(format) {
+      selectedFormat = format;
+      document.getElementById('pdfOption').classList.toggle('selected', format === 'pdf');
+      document.getElementById('docxOption').classList.toggle('selected', format === 'docx');
+    }
+
+    function confirmDownload() {
+      const refStyle = document.getElementById('refStyle').value;
+      const projectId = localStorage.getItem('projectId');
+      const token = localStorage.getItem('token');
+
+      if (!projectId) {
+        showToast('Project not found. Please go back to dashboard and try again.');
+        closeDownloadModal();
+        return;
+      }
+
+      closeDownloadModal();
+      showLoading(`Preparing your ${selectedFormat.toUpperCase()}...`);
+
+      // First save all generated content to database
+      const savePromises = Object.keys(generatedContent).map(chapterNum => {
+        return fetch(`${API_URL}/api/chapters/${projectId}/chapter/${chapterNum}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            content: generatedContent[chapterNum],
+            status: 'active'
+          })
+        });
+      });
+
+      Promise.all(savePromises)
+        .then(() => {
+          // Now download the file
+          const downloadUrl = `${API_URL}/api/download/${selectedFormat}/${projectId}`;
+
+          fetch(downloadUrl, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          .then(res => {
+            if (!res.ok) throw new Error('Download failed');
+            return res.blob();
+          })
+          .then(blob => {
+            hideLoading();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentProjectTitle.replace(/[^a-z0-9]/gi, '_')}.${selectedFormat}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            showToast(`Project downloaded successfully as ${selectedFormat.toUpperCase()}!`);
+          })
+          .catch(err => {
+            hideLoading();
+            showToast('Error downloading file. Please try again.');
+          });
+        })
+        .catch(err => {
+          hideLoading();
+          showToast('Error saving project before download. Please try again.');
+        });
+    }
+
+    // ── Sidebar ──
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function openMobileSidebar() {
+      document.getElementById('sidebar').classList.add('mobile-open');
+      document.getElementById('mobileOverlay').classList.add('visible');
+    }
+    function closeMobileSidebar() {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+      document.getElementById('mobileOverlay').classList.remove('visible');
+    }
+
+    // ── Loading ──
+    function showLoading(text) {
+      document.getElementById('loadingText').textContent = text || 'Loading...';
+      document.getElementById('loadingOverlay').classList.add('visible');
+    }
+
+    function hideLoading() { document.getElementById('loadingOverlay').classList.remove('visible'); }
+
+    // ── Toast ──
+    function showToast(msg) {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = msg;
+      toast.style.cssText = `position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:0.7rem 1.4rem;border-radius:8px;font-size:0.85rem;z-index:500;white-space:nowrap;`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ── Auto resize textarea ──
+    document.getElementById('promptInput').addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // ── Enter to send ──
+    document.getElementById('promptInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrompt(); }
+    });
+
+    // ── Init ──
+    buildChapterNav();
+    switchChapter(1);
+  </script>
+
+</body>
+</html>
