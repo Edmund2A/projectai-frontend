@@ -812,7 +812,7 @@
             <span class="nav-label">My Projects</span>
             <span class="nav-tooltip">My Projects</span>
           </a>
-          <a href="#" class="nav-item">
+          <a href="history.html" class="nav-item">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span class="nav-label">History</span>
             <span class="nav-tooltip">History</span>
@@ -1152,113 +1152,123 @@
     }
 
     // ── Generate Chapter ──
-    function generateChapter(id) {
-      const ch = chapters.find(c => c.id === id);
-      if (!token) { window.location.href = 'login.html'; return; }
+  function generateChapter(id) {
+  const ch = chapters.find(c => c.id === id);
+  if (!token) { window.location.href = 'login.html'; return; }
 
-      showLoading(`AI is writing ${ch.title}...`);
+  showLoading(`AI is writing ${ch.title}...`);
 
-      fetch('https://projectai-backend-production.up.railway.app/api/ai/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          topic: currentProjectTitle,
-          chapterNumber: id
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        hideLoading();
-        if (data.content) {
-          generatedContent[id] = data.content;
-          ch.status = 'active';
-          switchChapter(id);
-          showToast(`${ch.title} generated successfully!`);
-        } else {
-          showToast(data.message || 'Error generating chapter. Please try again.');
-        }
-      })
-      .catch(() => {
-        hideLoading();
-        showToast('Could not connect to server. Please try again.');
-      });
+  fetch('https://projectai-backend-production.up.railway.app/api/ai/generate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({
+      topic: currentProjectTitle,
+      chapterNumber: id
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    hideLoading();
+    if (data.content) {
+      generatedContent[id] = data.content;
+      ch.status = 'active';
+      switchChapter(id);
+      showToast(`${ch.title} generated successfully!`);
+      // Auto save after generation
+      autoSaveChapter(id, data.content, 'active');
+    } else {
+      showToast(data.message || 'Error generating chapter. Please try again.');
     }
+  })
+  .catch(() => {
+    hideLoading();
+    showToast('Could not connect to server. Please try again.');
+  });
+}
 
     // ── Send Prompt ──
     function sendPrompt() {
-      const input = document.getElementById('promptInput');
-      const prompt = input.value.trim();
-      if (!prompt) { input.focus(); return; }
-      if (!token) { window.location.href = 'login.html'; return; }
+  const input = document.getElementById('promptInput');
+  const prompt = input.value.trim();
+  if (!prompt) { input.focus(); return; }
+  if (!token) { window.location.href = 'login.html'; return; }
 
-      const ch = chapters.find(c => c.id === currentChapter);
-      const existingContent = generatedContent[currentChapter];
+  const ch = chapters.find(c => c.id === currentChapter);
+  const existingContent = generatedContent[currentChapter];
 
-      showLoading('AI is processing your request...');
-      input.value = '';
+  showLoading('AI is processing your request...');
+  input.value = '';
 
-      if (existingContent && ch.status !== 'pending') {
-        fetch('https://projectai-backend-production.up.railway.app/api/ai/edit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            content: existingContent,
-            userPrompt: prompt,
-            chapterNumber: currentChapter
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          hideLoading();
-          if (data.content) {
-            generatedContent[currentChapter] = data.content;
-            switchChapter(currentChapter);
-            showToast('Changes applied successfully!');
-          } else {
-            showToast(data.message || 'Error applying changes. Please try again.');
-          }
-        })
-        .catch(() => {
-          hideLoading();
-          showToast('Could not connect to server. Please try again.');
-        });
+  if (existingContent && ch.status !== 'pending') {
+    fetch('https://projectai-backend-production.up.railway.app/api/ai/edit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        content: existingContent,
+        userPrompt: prompt,
+        chapterNumber: currentChapter
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      hideLoading();
+      if (data.content) {
+        generatedContent[currentChapter] = data.content;
+        switchChapter(currentChapter);
+        showToast('Changes applied successfully!');
+        // Auto save after edit
+        autoSaveChapter(currentChapter, data.content, 'active');
+        // Save prompt to history
+        savePromptHistory(currentChapter, prompt, data.content);
       } else {
-        fetch('https://projectai-backend-production.up.railway.app/api/ai/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            topic: currentProjectTitle,
-            chapterNumber: currentChapter,
-            userPrompt: prompt
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          hideLoading();
-          if (data.content) {
-            generatedContent[currentChapter] = data.content;
-            ch.status = 'active';
-            switchChapter(currentChapter);
-            showToast('Chapter generated successfully!');
-          } else {
-            showToast(data.message || 'Error generating chapter. Please try again.');
-          }
-        })
-        .catch(() => {
-          hideLoading();
-          showToast('Could not connect to server. Please try again.');
-        });
+        showToast(data.message || 'Error applying changes. Please try again.');
       }
-    }
+    })
+    .catch(() => {
+      hideLoading();
+      showToast('Could not connect to server. Please try again.');
+    });
+  } else {
+    fetch('https://projectai-backend-production.up.railway.app/api/ai/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        topic: currentProjectTitle,
+        chapterNumber: currentChapter,
+        userPrompt: prompt
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      hideLoading();
+      if (data.content) {
+        generatedContent[currentChapter] = data.content;
+        ch.status = 'active';
+        switchChapter(currentChapter);
+        showToast('Chapter generated successfully!');
+        // Auto save after generation
+        autoSaveChapter(currentChapter, data.content, 'active');
+        // Save prompt to history
+        savePromptHistory(currentChapter, prompt, data.content);
+      } else {
+        showToast(data.message || 'Error generating chapter. Please try again.');
+      }
+    })
+    .catch(() => {
+      hideLoading();
+      showToast('Could not connect to server. Please try again.');
+    });
+  }
+}
 
     // ── Regenerate Charts ──
     function regenerateCharts() {
@@ -1419,6 +1429,79 @@
     document.getElementById('promptInput').addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrompt(); }
     });
+
+    // ── Auto Save Chapter ──
+function autoSaveChapter(chapterNum, content, status) {
+  const projectId = localStorage.getItem('projectId');
+  if (!projectId || !token) return;
+
+  fetch('https://projectai-backend-production.up.railway.app/api/chapters/' + projectId + '/chapter/' + chapterNum, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({ content, status })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('Chapter auto saved successfully');
+    showAutoSaveIndicator();
+  })
+  .catch(err => {
+    console.error('Auto save failed:', err);
+  });
+}
+
+// ── Save Prompt History ──
+function savePromptHistory(chapterNum, prompt, response) {
+  const projectId = localStorage.getItem('projectId');
+  if (!projectId || !token) return;
+
+  fetch('https://projectai-backend-production.up.railway.app/api/chapters/' + projectId + '/history', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify({
+      chapterNumber: chapterNum,
+      prompt,
+      response
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('Prompt history saved');
+  })
+  .catch(err => {
+    console.error('History save failed:', err);
+  });
+}
+
+// ── Auto Save Indicator ──
+function showAutoSaveIndicator() {
+  const existing = document.querySelector('.autosave-indicator');
+  if (existing) existing.remove();
+
+  const indicator = document.createElement('div');
+  indicator.className = 'autosave-indicator';
+  indicator.textContent = '✓ Auto saved';
+  indicator.style.cssText = `
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: #38a169;
+    color: #fff;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    z-index: 500;
+    animation: fadeInUp 0.3s ease;
+  `;
+  document.body.appendChild(indicator);
+  setTimeout(() => indicator.remove(), 2500);
+}
 
     // ── Init ──
     buildChapterNav();
