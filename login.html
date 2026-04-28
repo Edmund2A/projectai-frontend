@@ -50,6 +50,29 @@
       .auth-left-content p, .auth-features { display: none; }
       .auth-left-content h2 { font-size: 1.2rem; margin-bottom: 0; }
       .auth-right { padding: 1.8rem 1.2rem; align-items: flex-start; }
+      /* ── Google Sign In Button Fix ── */
+.g_id_signin {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+}
+
+.g_id_signin iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 680px) {
+  .g_id_signin {
+    width: 100% !important;
+  }
+  .g_id_signin iframe {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: unset !important;
+  }
+}
     }
   </style>
 </head>
