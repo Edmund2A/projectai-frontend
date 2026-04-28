@@ -1503,9 +1503,43 @@ function showAutoSaveIndicator() {
   setTimeout(() => indicator.remove(), 2500);
 }
 
-    // ── Init ──
+  // ── Load saved chapters from database ──
+function loadSavedChapters() {
+  const projectId = localStorage.getItem('projectId');
+  if (!projectId || !token) {
     buildChapterNav();
     switchChapter(1);
+    return;
+  }
+
+  fetch('https://projectai-backend-production.up.railway.app/api/chapters/' + projectId, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (Array.isArray(data)) {
+      data.forEach(ch => {
+        if (ch.content && ch.content.trim()) {
+          generatedContent[ch.chapter_number] = ch.content;
+          const chapter = chapters.find(c => c.id === ch.chapter_number);
+          if (chapter) {
+            chapter.status = ch.status || 'active';
+          }
+        }
+      });
+    }
+    buildChapterNav();
+    switchChapter(1);
+  })
+  .catch(err => {
+    console.error('Error loading saved chapters:', err);
+    buildChapterNav();
+    switchChapter(1);
+  });
+}
+
+// ── Init ──
+loadSavedChapters();
   </script>
 
 </body>
