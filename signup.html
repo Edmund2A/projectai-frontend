@@ -173,10 +173,21 @@
           </button>
         </form>
         <div class="auth-divider"><span>or sign up with</span></div>
-        <button class="btn-google" id="googleSignup">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18" />
-          Continue with Google
-        </button>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+<div id="g_id_onload"
+  data-client_id="503035356984-fh1smk3ebr684hfdgamrkimtgepo153t.apps.googleusercontent.com"
+  data-callback="handleGoogleSignup"
+  data-auto_prompt="false">
+</div>
+<div class="g_id_signin"
+  data-type="standard"
+  data-size="large"
+  data-theme="outline"
+  data-text="sign_in_with"
+  data-shape="rectangular"
+  data-logo_alignment="left"
+  data-width="400">
+</div>
         <p class="auth-switch">Already have an account? <a href="login.html">Log in</a></p>
       </div>
     </div>
@@ -321,9 +332,26 @@
     });
 
     // ── Google Signup ──
-    document.getElementById('googleSignup').addEventListener('click', () => {
-      alert('Google signup coming soon!');
-    });
+    function handleGoogleSignup(response) {
+  fetch(API_URL + '/api/auth/google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential: response.credential })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.location.href = 'Dashboard.html';
+    } else {
+      document.getElementById('signupEmailError').textContent = data.message || 'Google signup failed.';
+    }
+  })
+  .catch(err => {
+    document.getElementById('signupEmailError').textContent = 'Could not connect to server.';
+  });
+}
   </script>
 </body>
 </html>
